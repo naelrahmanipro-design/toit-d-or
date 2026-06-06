@@ -434,7 +434,7 @@ var io = new IntersectionObserver(function(entries) {
 }, { threshold: 0.1 });
 document.querySelectorAll('.reveal').forEach(function(el){ io.observe(el); });
 
-/* ── FORMULAIRE MAILTO ── */
+/* ── FORMULAIRE FORMSPREE ── */
   function envoyerDevis() {
     var prenom     = document.getElementById('prenom').value.trim();
     var nom        = document.getElementById('nom').value.trim();
@@ -453,23 +453,40 @@ document.querySelectorAll('.reveal').forEach(function(el){ io.observe(el); });
       return;
     }
 
-    var sujet = encodeURIComponent('Nouveau devis Toit d Or - ' + prenom + ' ' + nom + ' - ' + commune);
-    var corps = encodeURIComponent(
-      'NOUVELLE DEMANDE DE DEVIS - Toit d Or\n\n' +
-      'Nom : ' + prenom + ' ' + nom + '\n' +
-      'Tel : ' + telephone + '\n' +
-      'Email : ' + email + '\n' +
-      'Commune : ' + commune + '\n\n' +
-      'Prestation : ' + prestation + '\n' +
-      'Materiau : ' + (materiau || 'Non precise') + '\n' +
-      'Surface : ' + (surface || 'Non precisee') + '\n\n' +
-      'Message : ' + (message || 'Aucun message')
-    );
+    var btn = document.getElementById('submitBtn');
+    var btnText = document.getElementById('btnText');
+    btn.disabled = true;
+    btnText.textContent = 'Envoi en cours...';
 
-    window.location.href = 'mailto:naelrahmanipro@gmail.com?subject=' + sujet + '&body=' + corps;
-
-    document.getElementById('msgSuccess').style.display = 'block';
-    document.getElementById('msgError').style.display = 'none';
-    document.getElementById('submitBtn').style.opacity = '0.6';
-    document.getElementById('btnText').textContent = 'Demande envoyee !';
-  }s
+    fetch('https://formspree.io/f/mbdedwep', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify({
+        prenom: prenom,
+        nom: nom,
+        telephone: telephone,
+        email: email,
+        commune: commune,
+        prestation: prestation,
+        materiau: materiau || 'Non précisé',
+        surface: surface || 'Non précisée',
+        message: message || 'Aucun message'
+      })
+    })
+    .then(function(response) {
+      if (response.ok) {
+        document.getElementById('msgSuccess').style.display = 'block';
+        document.getElementById('msgError').style.display = 'none';
+        btn.style.opacity = '0.6';
+        btnText.textContent = 'Demande envoyée !';
+      } else {
+        throw new Error('Erreur serveur');
+      }
+    })
+    .catch(function() {
+      document.getElementById('msgError').textContent = 'Une erreur est survenue, veuillez réessayer.';
+      document.getElementById('msgError').style.display = 'block';
+      btn.disabled = false;
+      btnText.textContent = 'Envoyer ma demande →';
+    });
+  }
